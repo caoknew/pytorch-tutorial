@@ -1,9 +1,8 @@
-import torch 
+import torch
 import torchvision
 import torch.nn as nn
 import numpy as np
 import torchvision.transforms as transforms
-
 
 # ================================================================== #
 #                         Table of Contents                          #
@@ -15,7 +14,7 @@ import torchvision.transforms as transforms
 # 4. Input pipline                          (Line 104 to 129)
 # 5. Input pipline for custom dataset       (Line 136 to 156)
 # 6. Pretrained model                       (Line 163 to 176)
-# 7. Save and load model                    (Line 183 to 189) 
+# 7. Save and load model                    (Line 183 to 189)
 
 
 # ================================================================== #
@@ -34,10 +33,9 @@ y = w * x + b    # y = 2 * x + 3
 y.backward()
 
 # Print out the gradients.
-print(x.grad)    # x.grad = 2 
-print(w.grad)    # w.grad = 1 
-print(b.grad)    # b.grad = 1 
-
+print(x.grad)    # x.grad = 2
+print(w.grad)    # w.grad = 1
+print(b.grad)    # b.grad = 1
 
 # ================================================================== #
 #                    2. Basic autograd example 2                     #
@@ -48,11 +46,14 @@ x = torch.randn(10, 3)
 y = torch.randn(10, 2)
 
 # Build a fully connected layer.
+# [n, *, in_features] * [out_features, in_features] transpose = [n, *, out_features]
 linear = nn.Linear(3, 2)
+
 print ('w: ', linear.weight)
 print ('b: ', linear.bias)
 
 # Build loss function and optimizer.
+# 逐元素计算差的平方，默认为均值
 criterion = nn.MSELoss()
 optimizer = torch.optim.SGD(linear.parameters(), lr=0.01)
 
@@ -67,7 +68,7 @@ print('loss: ', loss.item())
 loss.backward()
 
 # Print out the gradients.
-print ('dL/dw: ', linear.weight.grad) 
+print ('dL/dw: ', linear.weight.grad)
 print ('dL/db: ', linear.bias.grad)
 
 # 1-step gradient descent.
@@ -96,25 +97,25 @@ y = torch.from_numpy(x)
 # Convert the torch tensor to a numpy array.
 z = y.numpy()
 
-
 # ================================================================== #
 #                         4. Input pipeline                           #
 # ================================================================== #
 
 # Download and construct CIFAR-10 dataset.
 train_dataset = torchvision.datasets.CIFAR10(root='../../data/',
-                                             train=True, 
+                                             train=True,
                                              transform=transforms.ToTensor(),
                                              download=True)
 
 # Fetch one data pair (read data from disk).
 image, label = train_dataset[0]
-print (image.size())
-print (label)
+print(image.size())
+print(label)
+print(train_dataset[0])
 
 # Data loader (this provides queues and threads in a very simple way).
 train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
-                                           batch_size=64, 
+                                           batch_size=64,
                                            shuffle=True)
 
 # When iteration starts, queue and thread start to load data from files.
@@ -122,6 +123,8 @@ data_iter = iter(train_loader)
 
 # Mini-batch images and labels.
 images, labels = data_iter.next()
+# a image's shape: 3*32*32, a label's shape: 1
+print(images[63].shape, labels[63])
 
 # Actual usage of the data loader is as below.
 for images, labels in train_loader:
@@ -137,24 +140,30 @@ for images, labels in train_loader:
 class CustomDataset(torch.utils.data.Dataset):
     def __init__(self):
         # TODO
-        # 1. Initialize file paths or a list of file names. 
-        pass
+        # 1. Initialize file paths or a list of file names.
+        self.path = '../../data/'
+        self.dataset = torchvision.datasets.CIFAR10(root=self.path, train=True, transform=transforms.ToTensor,
+                                                    download=False)
+
     def __getitem__(self, index):
         # TODO
         # 1. Read one data from file (e.g. using numpy.fromfile, PIL.Image.open).
         # 2. Preprocess the data (e.g. torchvision.Transform).
         # 3. Return a data pair (e.g. image and label).
-        pass
+        _image, _label = self.dataset[index]
+        return _image, _label
+
     def __len__(self):
         # You should change 0 to the total size of your dataset.
-        return 0 
+        return 0
 
-# You can then use the prebuilt data loader. 
+    # You can then use the prebuilt data loader.
+
+
 custom_dataset = CustomDataset()
 train_loader = torch.utils.data.DataLoader(dataset=custom_dataset,
-                                           batch_size=64, 
+                                           batch_size=64,
                                            shuffle=True)
-
 
 # ================================================================== #
 #                        6. Pretrained model                         #
@@ -173,8 +182,7 @@ resnet.fc = nn.Linear(resnet.fc.in_features, 100)  # 100 is an example.
 # Forward pass.
 images = torch.randn(64, 3, 224, 224)
 outputs = resnet(images)
-print (outputs.size())     # (64, 100)
-
+print(outputs.size())  # (64, 100)
 
 # ================================================================== #
 #                      7. Save and load the model                    #
